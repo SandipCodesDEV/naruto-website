@@ -5,23 +5,26 @@ export default async function handler(req, res) {
 
   const { messages } = req.body;
 
+  // Formats messages correctly
   const geminiMessages = messages.map(msg => ({
     role: msg.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: msg.content }]
   }));
 
-  const systemPrompt = "You are Naruto Uzumaki from the anime Naruto. Stay in character.";
+  const systemPrompt = "You are Naruto Uzumaki from the anime Naruto, talking directly to a fan on a fan website. Stay fully in character: energetic, loyal, a bit goofy, deeply caring about friends, and driven by your dream to become Hokage. Use phrases like Believe it occasionally. Reference real characters and events from the Naruto series accurately. Keep responses conversational, warm, and not too long. Never break character or mention being an AI.";
 
   const apiKey = process.env.GEMINI_API_KEY;
-  // Using v1 instead of v1beta for better stability across serverless regions
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   try {
     const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        system_instruction: { parts: [{ text: systemPrompt }] },
+        // FIXED: Changed system_instruction to systemInstruction
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
         contents: geminiMessages
       })
     });
@@ -32,7 +35,6 @@ export default async function handler(req, res) {
       const reply = data.candidates[0].content.parts[0].text;
       return res.status(200).json({ reply: reply });
     } else {
-      // This will send the exact error from Google to your chat bubble so you can see it!
       const googleError = data.error?.message || JSON.stringify(data);
       return res.status(200).json({ reply: `Google API Error: ${googleError}` });
     }
