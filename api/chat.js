@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     parts: [{ text: msg.content }]
   }));
 
-  // Safe approach: Inject the persona directly into the conversation history start
+  // Inject the persona directly into the conversation history start safely
   geminiMessages.unshift({
     role: 'user',
     parts: [{ text: `Context for this roleplay session: ${systemPrompt}` }]
@@ -23,7 +23,8 @@ export default async function handler(req, res) {
   });
 
   const apiKey = process.env.GEMINI_API_KEY;
-  const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+  // FIXED: Back to v1beta which fully supports gemini-1.5-flash string parsing
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   try {
     const response = await fetch(url, {
