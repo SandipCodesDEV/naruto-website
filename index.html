@@ -226,6 +226,37 @@
 </section>
 
 
+
+
+<!-------------------NARUTO CHATBOT-------------------->
+<section class="chat-section">
+    <h1>Talk to Naruto</h1>
+    <p class="chat-sub">Ask him anything — about his ninja way, his friends, or his journey to becoming Hokage.</p>
+
+    <div class="chat-box">
+        <div class="chat-header">
+            <div class="chat-avatar">忍</div>
+            <div class="chat-header-text">
+                <h3>Naruto Uzumaki</h3>
+                <span>● Online — Believe it!</span>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="msg bot">Hey there! It's me, Naruto Uzumaki! Believe it! Ask me anything — about being a ninja, my friends, or my dream of becoming Hokage!</div>
+        </div>
+
+        <div class="chat-input-row">
+            <input type="text" id="userInput" placeholder="Ask Naruto something..." />
+            <button id="sendBtn" onclick="sendMessage()">SEND</button>
+        </div>
+    </div>
+</section>
+
+
+
+
+
 <!----------------call to action------------>
 
 <section class="cta">
@@ -271,5 +302,84 @@
 
 
 
+<!-------Naruto Chatbot Script--------->
+<script>
+const chatMessages = document.getElementById('chatMessages');
+const userInput = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+let conversationHistory = [];
+
+function addMessage(text, sender){
+    const div = document.createElement('div');
+    div.className = 'msg ' + sender;
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function showTyping(){
+    const div = document.createElement('div');
+    div.className = 'typing';
+    div.id = 'typingIndicator';
+    div.innerHTML = '<span></span><span></span><span></span>';
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+function hideTyping(){
+    const el = document.getElementById('typingIndicator');
+    if(el) el.remove();
+}
+
+async function sendMessage(){
+    const text = userInput.value.trim();
+    if(!text) return;
+
+    addMessage(text, 'user');
+    conversationHistory.push({role: 'user', content: text});
+    userInput.value = '';
+    sendBtn.disabled = true;
+    showTyping();
+
+    try{
+        const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ messages: conversationHistory })
+        });
+
+        const data = await response.json();
+        const reply = data.reply || "Sorry, believe it, my chakra's a bit low right now — try again!";
+
+        hideTyping();
+        addMessage(reply, 'bot');
+        conversationHistory.push({role: 'assistant', content: reply});
+
+    } catch(err){
+        hideTyping();
+        addMessage("Whoa, looks like my ninja signal is down! Try again in a bit.", 'bot');
+        console.error(err);
+    }
+
+    sendBtn.disabled = false;
+}
+
+userInput.addEventListener('keypress', function(e){
+    if(e.key === 'Enter') sendMessage();
+});
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
   </body>
 </html>
+
