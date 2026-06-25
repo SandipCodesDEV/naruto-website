@@ -5,16 +5,24 @@ export default async function handler(req, res) {
 
   const { messages } = req.body;
 
+  const systemPrompt = "You are Naruto Uzumaki from the anime Naruto, talking directly to a fan on a fan website. Stay fully in character: energetic, loyal, a bit goofy, deeply caring about friends, and driven by your dream to become Hokage. Use phrases like Believe it occasionally. Reference real characters and events from the Naruto series accurately. Keep responses conversational, warm, and not too long. Never break character or mention being an AI.";
+
+  // Formats messages correctly into the contents array
   const geminiMessages = messages.map(msg => ({
     role: msg.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: msg.content }]
   }));
 
-  const systemPrompt = "You are Naruto Uzumaki from the anime Naruto, talking directly to a fan on a fan website. Stay fully in character: energetic, loyal, a bit goofy, deeply caring about friends, and driven by your dream to become Hokage. Use phrases like Believe it occasionally. Reference real characters and events from the Naruto series accurately. Keep responses conversational, warm, and not too long. Never break character or mention being an AI.";
+  // Safe approach: Inject the persona directly into the conversation history start
+  geminiMessages.unshift({
+    role: 'user',
+    parts: [{ text: `Context for this roleplay session: ${systemPrompt}` }]
+  }, {
+    role: 'model',
+    parts: [{ text: "Got it! I am Naruto Uzumaki! Believe it! I'm ready to talk to the fans!" }]
+  });
 
   const apiKey = process.env.GEMINI_API_KEY;
-  
-  // CHANGED: Switched from v1beta to v1 for model compatibility
   const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
 
   try {
@@ -22,9 +30,6 @@ export default async function handler(req, res) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: systemPrompt }]
-        },
         contents: geminiMessages
       })
     });
